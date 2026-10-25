@@ -1,16 +1,91 @@
+# DB_SOURCE=existing starts only the app. Point DATABASE_URL at a database you already have.
+# DB_SOURCE=container also starts the image for DB_PROVIDER (mongodb, postgresql, or mysql).
+# npm run docker:up reads those two values. docker compose up on its own starts the app only.
 services:
     app:
         build:
             context: .
             dockerfile: docker/Dockerfile
+            args:
+                DB_PROVIDER: ${DB_PROVIDER:-mongodb}
         ports:
             - "8000:8000"
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        depends_on:
+            mongodb:
+                condition: service_healthy
+                required: false
+            postgresql:
+                condition: service_healthy
+                required: false
+            mysql:
+                condition: service_healthy
+                required: false
         environment:
-            DB_CONNECTION: ${DB_CONNECTION}
-            PORT: ${PORT}
-            TOKEN_DURATION: ${TOKEN_DURATION}
-            TOKEN_SECRET: ${TOKEN_SECRET}
-            MAIL_HOST: ${MAIL_HOST}
-            MAIL_PORT: ${MAIL_PORT}
-            MAIL_USERNAME: ${MAIL_USERNAME}
-            MAIL_PASSWORD: ${MAIL_PASSWORD}
+            DB_PROVIDER: ${DB_PROVIDER:-mongodb}
+            DATABASE_URL: ${DATABASE_URL:-}
+            DB_PUSH: ${DB_PUSH:-false}
+            PORT: ${PORT:-8000}
+            TOKEN_DURATION: ${TOKEN_DURATION:-30m}
+            TOKEN_SECRET: ${TOKEN_SECRET:-}
+            MAIL_HOST: ${MAIL_HOST:-}
+            MAIL_PORT: ${MAIL_PORT:-}
+            MAIL_USERNAME: ${MAIL_USERNAME:-}
+            MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+
+    mongodb:
+        profiles: ["mongodb"]
+        image: mongo:7
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongodb_data:/data/db
+        healthcheck:
+            test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+            start_period: 10s
+
+    postgresql:
+        profiles: ["postgresql"]
+        image: postgres:16
+        environment:
+            POSTGRES_USER: ${DB_USER:-app}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+            POSTGRES_DB: ${DB_NAME:-app}
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgresql_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app} -d ${DB_NAME:-app}"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+            start_period: 10s
+
+    mysql:
+        profiles: ["mysql"]
+        image: mysql:8
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+            MYSQL_USER: ${DB_USER:-app}
+            MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+            MYSQL_DATABASE: ${DB_NAME:-app}
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+            start_period: 20s
+
+volumes:
+    mongodb_data:
+    postgresql_data:
+    mysql_data:

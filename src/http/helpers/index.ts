@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongoose";
 
 export const stringToHash = (string: string): string => {
     const saltRounds = 10;
@@ -8,9 +7,9 @@ export const stringToHash = (string: string): string => {
     return hashedString;
 };
 
-export const generatePayloadFromToken = (token: string): { id: ObjectId } => {
+export const generatePayloadFromToken = (token: string): { id: string } => {
     const salt = process.env.TOKEN_SECRET || "inCaseEnvNoDey";
-    const payload = jwt.verify(token, salt) as { id: ObjectId };
+    const payload = jwt.verify(token, salt) as { id: string };
     return payload;
 };
 

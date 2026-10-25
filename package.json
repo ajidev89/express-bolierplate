@@ -5,8 +5,13 @@
     "main": "app.js",
     "scripts": {
         "start": "node build/app.js",
-        "build": "tspc && copyfiles -u 1 src/views/**/* build/",
-        "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/app.ts"
+        "build": "node scripts/use-database.js generate && tspc && copyfiles -u 1 src/views/**/* build/",
+        "dev": "node scripts/use-database.js generate && nodemon --exec ts-node -r tsconfig-paths/register src/app.ts",
+        "db:generate": "node scripts/use-database.js generate",
+        "db:push": "node scripts/use-database.js push",
+        "docker:up": "node scripts/docker-up.js up --build",
+        "docker:down": "node scripts/docker-up.js down",
+        "postinstall": "node scripts/use-database.js generate"
     },
     "husky": {
         "hooks": {
@@ -36,6 +41,7 @@
         "typescript-transform-paths": "^3.5.1"
     },
     "dependencies": {
+        "@prisma/client": "^6.19.3",
         "bcryptjs": "^2.4.3",
         "body-parser": "^1.20.2",
         "cors": "^2.8.5",
@@ -46,9 +52,9 @@
         "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",
         "module-alias": "^2.2.3",
-        "mongoose": "^8.4.5",
         "morgan": "^1.10.0",
         "nodemailer": "^6.9.15",
+        "prisma": "^6.19.3",
         "winston": "^3.13.0"
     }
 }

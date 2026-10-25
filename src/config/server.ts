@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "@/config/cors";
-import MongoDB from "@/config/mongodb";
+import Database from "@/config/database";
 import dotenv from "dotenv";
 import router from "@/routes";
 import logger from "@/config/logger";
@@ -15,7 +15,7 @@ class Server {
     public port;
 
     constructor() {
-        this.database = new MongoDB();
+        this.database = new Database();
         this.cors = cors;
         this.app = express();
         this.port = process.env.PORT || 8800;

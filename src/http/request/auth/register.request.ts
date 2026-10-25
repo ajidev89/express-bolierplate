@@ -1,6 +1,5 @@
 import Joi from "joi";
 import ValidationClass from "..";
-import User from "@/http/models/user";
 
 class RegisterRequest extends ValidationClass<{
     first_name: string;

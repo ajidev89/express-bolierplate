@@ -1,17 +1,15 @@
 import { NextFunction, Request, Response } from "express";
+import { User } from "@prisma/client";
 import { generatePayloadFromToken } from "../helpers";
-import User, { IUser, IUserModel } from "../models/user";
+import { prisma } from "@/config/database";
+
+type AuthenticatedUser = Omit<User, "password">;
 
 interface RequestWithUser extends Request {
-    user?: IUser; // Adjust the type according to your User model
+    user?: AuthenticatedUser;
 }
 
 class AuthMiddleWare {
-    private user: IUserModel;
-    constructor() {
-        this.user = User;
-    }
-
     async check(
         req: RequestWithUser,
         res: Response,
@@ -31,15 +29,17 @@ class AuthMiddleWare {
 
             const generatePayload = generatePayloadFromToken(token);
 
-            const user = await this.user.findOne({
-                id: generatePayload.id,
+            const user = await prisma.user.findUnique({
+                where: { id: generatePayload.id },
             });
 
             if (!user) {
                 throw new Error("Token not found --//401");
             }
 
-            req.user = user;
+            const { password, ...publicUser } = user;
+            void password;
+            req.user = publicUser;
 
             next();
         } catch (error: any) {

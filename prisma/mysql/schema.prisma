@@ -1,0 +1,48 @@
+// Keep model and field names identical to the MongoDB and Postgres schemas.
+// Switch with DB_PROVIDER in .env, then run npm run db:generate.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id              String    @id @default(cuid())
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  email           String    @unique
+  phone           String?
+  password        String
+  role            Role      @default(USER)
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  phoneVerifiedAt DateTime? @map("phone_verified_at")
+  passwordReset   String?   @map("password_reset")
+  otps            Otp[]
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Otp {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  usedAt    DateTime? @map("used_at")
+  expiredAt DateTime  @map("expired_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("otps")
+}
